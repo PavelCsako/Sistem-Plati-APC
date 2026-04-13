@@ -19,29 +19,32 @@ O aplicație Full-Stack modernă pentru procesarea transferurilor bancare simult
 ## Case Studies
 
 ### 1. Interfața Principală și Selecția
+<img width="994" height="467" alt="image" src="https://github.com/user-attachments/assets/ddbe787f-8df6-432b-a421-43f605fb52aa" />
+
 Utilizatorul poate alege una sau mai multe unități bancare pentru a iniția transferuri.
-**[SCREENSHOT: Meniul de selecție cu 2-3 bănci bifate]**
+<img width="986" height="753" alt="image" src="https://github.com/user-attachments/assets/060ce4b6-f0a4-496b-a151-c22f6b98c2e6" />
+
 
 ### 2. Validarea Datelor și Limitări
 Sistemul previne erorile de introducere, cum ar fi sumele negative sau depășirea limitei de credit.
-**[SCREENSHOT: Mesaje de eroare pentru "Suma trebuie sa fie pozitiva"]**
-**[SCREENSHOT: Mesaj de eroare pentru depășirea limitei de 5000 RON]**
+<img width="865" height="582" alt="image" src="https://github.com/user-attachments/assets/060ea7a3-6d31-49e6-a28f-010b70a97fb2" />
+<img width="867" height="157" alt="image" src="https://github.com/user-attachments/assets/2b1bd3ec-baea-4254-a79b-d4cc7c9252cc" />
 
 ### 3. Securitate: Detectarea Fraudei
 Aplicația blochează tranzacțiile dacă detectează utilizarea aceluiași card în mai multe locații simultan.
-**[SCREENSHOT: Mesajul de Alerta Securitate pentru card utilizat în mai multe orașe]**
+<img width="895" height="609" alt="image" src="https://github.com/user-attachments/assets/5b5a0250-6574-4516-8f77-d33a8336c142" />
 
 ### 4. Succes și Confirmare
 După procesarea cu succes, formularele sunt curățate și utilizatorul primește confirmarea.
-**[SCREENSHOT: Mesajul verde "Transferurile au fost procesate"]**
+<img width="995" height="470" alt="image" src="https://github.com/user-attachments/assets/d1094fb4-1b4f-405f-8ec1-0bc31f01613a" />
 
 ### 5. Managementul Istoricului
 Tranzacțiile sunt salvate cu toate detaliile tehnice necesare.
-**[SCREENSHOT: Pagina de Istoric cu mai multe tranzacții listate]**
+<img width="990" height="866" alt="image" src="https://github.com/user-attachments/assets/763979b6-c3a2-42b1-8452-14332621a5bc" />
 
 ### 6. Sistemul de Filtrare
 Filtrarea dinamică permite auditarea rapidă a plăților.
-**[SCREENSHOT: Modalul de filtrare deschis, cu fundalul blurat în spate]**
+<img width="689" height="760" alt="image" src="https://github.com/user-attachments/assets/ddbe2e0b-69ed-484c-9895-0c138d0a8df1" />
 
 ---
 
