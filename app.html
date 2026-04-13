@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistem de Plati APC</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #f0f2f5 0%, #dae0e5 100%); color: #1c1e21; display: flex; justify-content: center; padding: 40px; margin: 0; transition: filter 0.3s;}
+        .app-container { background: #ffffff; width: 680px; padding: 50px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); border: 1px solid #dee2e6; z-index: 1;}
+        
+        body.modal-open .app-container { filter: blur(5px); pointer-events: none; }
+
+        /* FARA EMOJI LA TITLURI */
+        h1, h2 { color: #1a1a1a; text-align: center; font-weight: 700; margin-bottom: 30px; }
+        
+        /* Butoane */
+        .btn { background: #007bff; color: white; border: none; padding: 14px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; margin-top: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease-in-out; }
+        .btn:hover { background: #0069d9; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,123,255,0.2); }
+        .btn:disabled { background: #a5c8ed; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #5a6268; box-shadow: 0 4px 8px rgba(108,117,125,0.2); }
+        
+        .page { display: none; }
+        .page.active { display: block; }
+        
+        /* Lista Bănci */
+        .bank-option { padding: 15px 30px; border-bottom: 1px solid #edf0f2; display: flex; align-items: center; justify-content: flex-start; cursor: pointer; transition: background 0.2s; }
+        .bank-option:hover { background-color: #f8f9fa; border-radius: 6px; }
+        .bank-option label { font-size: 17px; cursor: pointer; margin-left: 15px; font-weight: 500; width: 100%; }
+        input[type="checkbox"] { transform: scale(1.4); cursor: pointer; margin: 0; }
+        
+        /* Formulare */
+        .form-section { background: #f0f3f6; padding: 25px; margin-bottom: 25px; border: 1px solid #e1e4e8; border-radius: 8px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.02); text-align: center; }
+        .form-section strong { font-size: 19px; color: #2c3e50; display: block; margin-bottom: 15px; border-bottom: 2px solid #343a40; padding-bottom: 10px; }
+        
+        /* Câmpuri input */
+        input[type="text"], input[type="number"] { width: 100%; padding: 12px; margin-top: 10px; border: 1px solid #ced4da; border-radius: 6px; box-sizing: border-box; font-size: 14px; text-align: center; }
+        
+        /* Erori */
+        .error-container { color: #b00020; background: #fde8e8; padding: 20px; border-radius: 6px; margin-top: 30px; font-size: 15px; line-height: 1.6; border: 1px solid #f9b4b4; text-align: left; }
+        
+        /* Mesaj Succes */
+        .success-message { color: #155724; background: #d4edda; padding: 25px; border-radius: 6px; text-align: center; border: 1px solid #c3e6cb; font-size: 20px; font-weight: 600; margin-bottom: 30px; }
+        .success-message::before { content: '✅ '; }
+        
+        /* Istoric */
+        .nav-group { display: flex; gap: 15px; margin-top: 30px; }
+        #history-content { background: #282c34; color: #abb2bf; padding: 20px; border-radius: 6px; font-size: 14px; max-height: 450px; overflow-y: auto; border: 1px solid #444; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); white-space: pre-wrap; word-wrap: break-word; line-height: 1.6;}
+
+        /* Modal Filtru */
+        #filter-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 1000; width: 400px; }
+        .filter-group { margin-bottom: 20px; }
+        .filter-group h4 { margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div id="page-intro" class="page active">
+        <h1>Sistem de Plati APC</h1>
+        <p style="text-align: center; color: #666; font-size: 16px; margin-bottom: 30px;">Platforma securizata pentru transferuri interbancare instant.</p>
+        <button class="btn" onclick="resetAndGoToSelect()">➡️ Initiere Transfer Nou</button>
+        <button class="btn btn-secondary" onclick="loadHistory()">Consultare Istoric Tranzactii</button>
+    </div>
+
+    <div id="page-select" class="page">
+        <h2>Selectie Unitati Bancare</h2>
+        <div id="bank-list" style="margin-bottom: 30px;"></div>
+        <button class="btn" onclick="goToForms()">Continuare catre Detalii</button>
+        <button class="btn btn-secondary" onclick="showPage('page-intro')">🚫 Anulare</button>
+    </div>
+
+    <div id="page-forms" class="page">
+        <h2>Detalii Tranzactii</h2>
+        <div id="forms-container"></div>
+        <div id="error-display" class="error-container" style="display:none;"></div>
+        
+        <div id="completion-view" style="display:none;">
+            <div class="success-message">Transferurile au fost procesate si salvate in sistem.</div>
+            <div class="nav-group">
+                <button class="btn" onclick="showPage('page-intro')">🏠 Meniu Principal</button>
+                <button class="btn btn-secondary" onclick="loadHistory()">📜 Istoric</button>
+            </div>
+        </div>
+
+        <button id="submit-trigger" class="btn" onclick="executeProcess()">Executare Transferuri</button>
+        <button id="back-trigger" class="btn btn-secondary" onclick="showPage('page-intro')">Inapoi la Meniu</button>
+    </div>
+
+    <div id="page-history" class="page">
+        <h2>Istoric Sistem</h2>
+        <button class="btn" style="background:#28a745; margin-bottom:10px" onclick="openFilter()">🔍 Filtreaza Rezultatele</button>
+        <pre id="history-content"></pre>
+        <button class="btn btn-secondary" onclick="showPage('page-intro')">🏠 Revenire la Meniu</button>
+    </div>
+</div>
+
+<div id="filter-modal">
+    <h3 style="text-align:center; margin-top:0;">🔍 Filtreaza Istoricul</h3>
+    <div class="filter-group">
+        <h4>📍 Dupa Locatie:</h4>
+        <div id="filter-locations"></div>
+    </div>
+    <div class="filter-group">
+        <h4>📅 Dupa Ziua Efectuarii:</h4>
+        <div id="filter-days"></div>
+    </div>
+    <div class="nav-group" style="margin-top: 30px;">
+        <button class="btn" onclick="applyFilters()">✅ Aplica Filtre</button>
+        <button class="btn btn-secondary" onclick="resetFilters()">🔄 Reset</button>
+    </div>
+    <button class="btn btn-secondary" style="background:#e74c3c; margin-top:10px;" onclick="closeFilter()">❌ Cancel</button>
+</div>
+
+<script>
+    const units = [ "APC Timisoara", "APC Bucuresti", "APC Cluj", "APC Iasi", "APC Brasov"];
+    let activeSelection = [];
+    let fullHistory = [];
+    const MAX_LIMIT = 5000;
+    
+    // Variabile care tin minte starea filtrelor aplicate anterior
+    let appliedLocs = [];
+    let appliedDays = [];
+
+    window.onload = () => {
+        const list = document.getElementById('bank-list');
+        units.forEach((name, i) => {
+            list.innerHTML += `<div class="bank-option"><input type="checkbox" id="u-${i}" value="${name}"><label for="u-${i}">🏦 ${name}</label></div>`;
+        });
+    }
+
+    function resetAndGoToSelect() {
+        document.querySelectorAll('#bank-list input[type="checkbox"]').forEach(cb => cb.checked = false);
+        showPage('page-select');
+    }
+
+    function showPage(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        
+        if(id === 'page-forms') {
+            const btn = document.getElementById('submit-trigger');
+            btn.innerHTML = "Executare Transferuri";
+            btn.disabled = false;
+            btn.style.display = 'block';
+            
+            document.getElementById('back-trigger').style.display = 'block';
+            document.getElementById('completion-view').style.display = 'none';
+            document.getElementById('error-display').style.display = 'none';
+        }
+    }
+
+    function goToForms() {
+        activeSelection = [];
+        units.forEach((name, i) => {
+            if(document.getElementById(`u-${i}`).checked) activeSelection.push(name);
+        });
+
+        if(activeSelection.length === 0) {
+            alert("⚠️ Selectati cel putin o unitate bancara.");
+            return;
+        }
+
+        const box = document.getElementById('forms-container');
+        box.innerHTML = '';
+        activeSelection.forEach((name, i) => {
+            box.innerHTML += `
+                <div class="form-section">
+                    <strong>🏦 ${name}</strong>
+                    <input type="number" id="amt-${i}" placeholder="Suma transfer (RON)">
+                    <input type="text" id="crd-${i}" maxlength="16" placeholder="Numar card (16 cifre) 💳">
+                </div>
+            `;
+        });
+        showPage('page-forms');
+    }
+
+    async function executeProcess() {
+        let errorLog = [];
+        let cardMap = {}; 
+        let calls = [];
+
+        for(let i=0; i<activeSelection.length; i++) {
+            let val = document.getElementById(`amt-${i}`).value;
+            let num = document.getElementById(`crd-${i}`).value.trim();
+            let loc = activeSelection[i];
+
+            // EROARE CU MAX LIMIT (INCLUSIV PARANTEZA CERUTA)
+            if(!val || val <= 0) {
+                errorLog.push(`❌ <strong>${loc}:</strong> Suma trebuie sa fie pozitiva.`);
+            } else if(val > MAX_LIMIT) {
+                errorLog.push(`❌ <strong>${loc}:</strong> Suma depaseste limita (maxim ${MAX_LIMIT} RON).`);
+            }
+
+            if(!num || num.length !== 16) {
+                errorLog.push(`❌ <strong>${loc}:</strong> Cardul trebuie sa aiba exact 16 cifre.`);
+            }
+            
+            if(num && num.length === 16) {
+                if(!cardMap[num]) cardMap[num] = [];
+                cardMap[num].push(loc);
+            }
+        }
+
+        for (let cardNum in cardMap) {
+            if (cardMap[cardNum].length > 1) {
+                // MODIFICAREA CERUTĂ AICI: S-a scos referința la ultimele 4 cifre
+                errorLog.push(`🚨 <strong>Alerta Securitate:</strong> Acelasi card este utilizat simultan pentru transferuri catre: ${cardMap[cardNum].join(", ")}. Operatiunea a fost suspendata.`);
+            }
+        }
+
+        if(errorLog.length > 0) {
+            const errDiv = document.getElementById('error-display');
+            errDiv.innerHTML = errorLog.join('<br><br>');
+            errDiv.style.display = 'block';
+            return;
+        }
+
+        document.getElementById('error-display').style.display = 'none';
+        document.getElementById('error-display').innerHTML = '';
+        document.getElementById('submit-trigger').innerHTML = "⏳ Procesare in curs...";
+        document.getElementById('submit-trigger').disabled = true;
+
+        try {
+            for(let i=0; i<activeSelection.length; i++) {
+                calls.push(fetch('http://localhost:8080/process', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        amount: parseFloat(document.getElementById(`amt-${i}`).value), 
+                        currency: "RON", 
+                        cardNumber: document.getElementById(`crd-${i}`).value.trim(),
+                        destinationBank: activeSelection[i]
+                    })
+                }));
+            }
+            
+            await Promise.all(calls); 
+            
+            document.getElementById('forms-container').innerHTML = '';
+            document.getElementById('submit-trigger').style.display = 'none';
+            document.getElementById('back-trigger').style.display = 'none';
+            document.getElementById('completion-view').style.display = 'block';
+            
+            // Daca faci un transfer nou cu succes, resetam filtrele de istoric
+            appliedLocs = [];
+            appliedDays = [];
+            
+        } catch(e) {
+            document.getElementById('error-display').innerHTML = "❌ Eroare de conexiune cu serverul central. Asigura-te ca serverul Java ruleaza.";
+            document.getElementById('error-display').style.display = 'block';
+            document.getElementById('submit-trigger').innerHTML = "Executare Transferuri";
+            document.getElementById('submit-trigger').disabled = false;
+        }
+    }
+
+    async function loadHistory() {
+        try {
+            const res = await fetch('http://localhost:8080/transactions');
+            fullHistory = await res.json();
+            
+            let filtered = fullHistory.filter(t => {
+                const matchLoc = appliedLocs.length === 0 || appliedLocs.includes(t.destinationBank);
+                const matchDay = appliedDays.length === 0 || (t.timestamp && appliedDays.includes(t.timestamp.split(' ')[0]));
+                return matchLoc && matchDay;
+            });
+            
+            renderHistory(filtered);
+            showPage('page-history');
+        } catch(e) {
+            alert("⚠️ Serverul nu raspunde. Porneste aplicatia Java din IntelliJ mai intai.");
+        }
+    }
+
+    function renderHistory(data) {
+        let historyContainer = document.getElementById('history-content');
+        
+        if (data.length === 0) {
+            historyContainer.innerHTML = "<em>Nu exista nicio tranzactie inregistrata inca.</em>";
+        } else {
+            // CODUL EXACT PE CARE MI L-AI CERUT
+            let formattedHistory = data.map((t, index) => {
+                let time = t.timestamp ? t.timestamp : "Data necunoscuta";
+                return `#${index + 1} \n time: [${time}] \n bank: ${t.destinationBank} \n card: ${t.maskedCard} \n sum: ${t.amount} ${t.currency} \n Status: ${t.status || 'APPROVED'}`;
+            }).join('\n--------------------------------------------------------------------------------\n');
+            
+            historyContainer.innerText = formattedHistory;
+        }
+    }
+
+    // LOGICA FILTRARE
+    function openFilter() {
+        document.body.classList.add('modal-open');
+        document.getElementById('filter-modal').style.display = 'block';
+        
+        const locs = [...new Set(fullHistory.map(t => t.destinationBank))];
+        const days = [...new Set(fullHistory.map(t => t.timestamp ? t.timestamp.split(' ')[0] : ''))].filter(d => d);
+
+        // Cand deschidem fereastra, le bifam pe cele salvate in starea 'applied'
+        document.getElementById('filter-locations').innerHTML = locs.map(l => {
+            let isChecked = appliedLocs.includes(l) ? 'checked' : '';
+            return `<label style="display:block; margin:5px 0; cursor:pointer;"><input type="checkbox" class="f-loc" value="${l}" ${isChecked}> 🏦 ${l}</label>`;
+        }).join('');
+        
+        document.getElementById('filter-days').innerHTML = days.map(d => {
+            let isChecked = appliedDays.includes(d) ? 'checked' : '';
+            return `<label style="display:block; margin:5px 0; cursor:pointer;"><input type="checkbox" class="f-day" value="${d}" ${isChecked}> 📅 ${d}</label>`;
+        }).join('');
+    }
+
+    function closeFilter() {
+        document.body.classList.remove('modal-open');
+        document.getElementById('filter-modal').style.display = 'none';
+    }
+
+    function applyFilters() {
+        // Cand dam click pe Aplica, salvam noile optiuni
+        appliedLocs = Array.from(document.querySelectorAll('.f-loc:checked')).map(cb => cb.value);
+        appliedDays = Array.from(document.querySelectorAll('.f-day:checked')).map(cb => cb.value);
+
+        let filtered = fullHistory.filter(t => {
+            const matchLoc = appliedLocs.length === 0 || appliedLocs.includes(t.destinationBank);
+            const matchDay = appliedDays.length === 0 || (t.timestamp && appliedDays.includes(t.timestamp.split(' ')[0]));
+            return matchLoc && matchDay;
+        });
+
+        renderHistory(filtered);
+        closeFilter();
+    }
+
+    function resetFilters() {
+        // Doar le debifam vizual. Nu se iese din meniu pana nu apesi "Aplica Filtre"
+        document.querySelectorAll('#filter-modal input[type="checkbox"]').forEach(cb => cb.checked = false);
+    }
+</script>
+
+</body>
+</html>
